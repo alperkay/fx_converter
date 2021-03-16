@@ -1,11 +1,15 @@
 <template>
   <footer class="footer">
-    <div v-if="isLoading">Loading...</div>
+    <div v-if="isLoading"><span>&#9203;</span>Loading...</div>
 
     <div class="footer__error-section" v-if="errors.length">
-      <div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+      <div v-for="(error, index) in errors" :key="index">
+        <span>&#128227;</span>{{ error }}
+      </div>
     </div>
-    <div class="footer__message-section" v-if="message">{{ message }}</div>
+    <div class="footer__message-section" v-if="message">
+      <span>&#9888;&#65039;</span>{{ message }}
+    </div>
   </footer>
 </template>
 

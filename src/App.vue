@@ -28,10 +28,12 @@
             />
             <div
               @click="deleteCurrency(item.currency)"
+              v-if="![0, 1].includes(index)"
               class="inner-container__delete"
             >
               &#10060;
             </div>
+            <div v-else class="inner-container__delete"></div>
           </div>
           <div class="item__equal-sign">
             <h1 v-if="index !== currencyData.length - 1">
@@ -370,6 +372,7 @@ input[type="number"] {
               }
               .inner-container__delete {
                 opacity: 0;
+                height: 26px;
               }
             }
             .item {
