@@ -4,7 +4,9 @@ This is a web app to convert currencies. Data is borrowed from the [Exchange Rat
 
 ## Notes for further development considerations:
 
+- Drew ui inspiration from Google, DuckDuckGo and TransferWise FX converters. (Google also doesn't deal with large numbers. TransferWise doesn't inform user for errors coming from the server).
 - There's no visual feedback that user has to scroll horizontally for the added currencies.
+- Proper rounding of decimals is missing.
 - This app doesn't deal with proper displaying of large numbers since Javascript's Number primitive has limitations. This can be solved with custom functionality.
 - There's no thousand separators for easier reading.
 - Vue Router can be used to set url query params after user actions, so that the resulting url can be shareable and fetches automatically based on the params.
@@ -17,6 +19,7 @@ This is a web app to convert currencies. Data is borrowed from the [Exchange Rat
 - Native HTML date input doesn't have a date picker on Safari. Custom one can be made.
 - For now, usage of Vuex seems unnecessary as there's only one view and limited number of components.
 - Unit and E2E tests are missing.
+- Debouncing can be added. 
 
 ## Project setup
 
