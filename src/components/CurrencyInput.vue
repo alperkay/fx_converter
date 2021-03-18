@@ -43,9 +43,10 @@ export default Vue.extend({
 <style lang="scss">
 .input {
   padding: 0 10px;
-  height: 50px;
-  line-height: 44px;
-  width: 150px;
+  width: 100%;
+  max-width: 150px;
+  min-width: 135px;
+  height: 2rem;
   font-size: 1.2rem;
   border: 1.7px solid gray;
   border-radius: 2px;

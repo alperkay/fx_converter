@@ -3,18 +3,18 @@
     <Header class="app__header" />
     <section class="app__actionable-section">
       <DateInput
-        class="actionable-section__date-input"
+        class="app__date-input"
         data-cy="date-input"
         v-model="date"
         @input="onDateChange"
       />
-      <div class="actionable-section__currencies-container">
+      <div class="app__currencies-container">
         <div
-          class="currencies-container__item"
+          class="app__currencies-item"
           v-for="(item, index) in currencyData"
           :key="item.currency"
         >
-          <div class="item__inner-container">
+          <div class="app__item-inner-container">
             <CurrencyInput
               v-model.number="item.value"
               @input="onValueInput(item)"
@@ -28,14 +28,14 @@
             />
             <div
               @click="deleteCurrency(item.currency)"
-              v-if="![0, 1].includes(index)"
-              class="inner-container__delete"
+              v-if="currencyData.length > 1"
+              class="app__item-delete"
             >
               &#10060;
             </div>
-            <div v-else class="inner-container__delete"></div>
+            <div v-else class="app__item-delete"></div>
           </div>
-          <div class="item__equal-sign">
+          <div class="app__item-equal-sign">
             <h1 v-if="index !== currencyData.length - 1">
               =
             </h1>
@@ -44,7 +44,7 @@
         </div>
       </div>
       <div
-        class="actionable-section__add-button"
+        class="app__add-button"
         v-if="unusedCurrencies.length"
         @click="addCurrency"
       >
@@ -234,15 +234,19 @@ export default Vue.extend({
       this.isLoading = payload;
     },
     setServerError() {
+      if (this.errors.includes(Constants.ERRORS.SERVER)) {
+        return;
+      }
       this.errors.push(Constants.ERRORS.SERVER);
-      this.errors = [...new Set(this.errors)];
     },
     removeServerError() {
       this.errors = this.errors.filter(err => err !== Constants.ERRORS.SERVER);
     },
     setInvalidInputError() {
+      if (this.errors.includes(Constants.ERRORS.INVALID_INPUT)) {
+        return;
+      }
       this.errors.push(Constants.ERRORS.INVALID_INPUT);
-      this.errors = [...new Set(this.errors)];
     },
     removeInvalidInputError() {
       this.errors = this.errors.filter(
@@ -331,7 +335,7 @@ input[type="number"] {
 
   &__header {
     margin-top: 1rem;
-    margin-bottom: 4rem;
+    margin-bottom: 3rem;
   }
 
   &__actionable-section {
@@ -339,59 +343,60 @@ input[type="number"] {
     justify-content: center;
     flex-direction: column;
     align-items: center;
+    width: 100%;
+  }
 
-    .actionable-section {
-      &__date-input {
-        width: 210px;
-      }
-      &__currencies-container {
-        -webkit-overflow-scrolling: touch;
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: scroll;
-        align-items: center;
-        margin: 30px 0;
-        padding: 0 10px;
-        max-width: 400px;
-        width: auto;
-        .currencies-container {
-          &__item {
-            width: 200px;
-            height: 140px;
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            .item__inner-container {
-              padding: 10px 0;
-              cursor: pointer;
-              &:hover {
-                background-color: rgb(243, 237, 237);
-              }
-              &:hover .inner-container__delete {
-                opacity: 1;
-              }
-              .inner-container__delete {
-                opacity: 0;
-                height: 26px;
-              }
-            }
-            .item {
-              &__equal-sign {
-                margin: 0 10px;
-              }
-            }
-          }
-        }
-      }
-      &__add-button {
-        cursor: pointer;
-        border: 1px solid black;
-        border-radius: 4px;
-        padding: 6px 10px;
-        &:hover {
-          background-color: rgb(243, 237, 237);
-        }
-      }
+  &__date-input {
+    width: 150px;
+  }
+  &__currencies-container {
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  &__currencies-item {
+    width: 50%;
+    max-width: 250px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-bottom: 15px;
+  }
+
+  &__item-inner-container {
+    cursor: pointer;
+    &:hover {
+      background-color: rgb(243, 237, 237);
+    }
+    &:hover .app__item-delete {
+      opacity: 1;
+    }
+  }
+
+  &__item-delete {
+    opacity: 0;
+    height: 26px;
+  }
+
+  &__item-equal-sign {
+    margin-top: -25px;
+  }
+
+  &__add-button {
+    cursor: pointer;
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 6px 10px;
+    &:hover {
+      background-color: rgb(243, 237, 237);
     }
   }
 

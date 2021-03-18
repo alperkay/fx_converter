@@ -27,9 +27,9 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .date-input {
-  padding: 0 10px;
+  padding: 0 5px;
   line-height: 2rem;
-  font-size: 1.2rem;
+  font-size: 1rem;
   border: 1.7px solid gray;
   border-radius: 2px;
   cursor: pointer;
