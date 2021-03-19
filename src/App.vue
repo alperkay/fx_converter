@@ -133,6 +133,7 @@ export default Vue.extend({
         item => item.currency === this.lastChangedCurrency
       ) as CurrencyInterface;
       await this.updateData(lastChangedCurrency);
+      await this.updateHistoricalData();
     },
     availableCurrencies(currentSelectedCurrency: string): string[] {
       const otherSelected = this.currencyData
@@ -233,6 +234,7 @@ export default Vue.extend({
 
       if (this.hasServerError) {
         await this.updateData(changedCurrency);
+        await this.updateHistoricalData();
       } else {
         this.currencyData.forEach(item => {
           if (item.currency !== changedCurrency.currency) {
@@ -247,6 +249,7 @@ export default Vue.extend({
     async onSelectedCurrencyChange(changedCurrency: CurrencyInterface) {
       this.lastChangedCurrency = changedCurrency.currency;
       await this.updateData(changedCurrency);
+      await this.updateHistoricalData();
     },
     setLoading(payload: boolean) {
       this.isLoading = payload;
@@ -371,7 +374,7 @@ input[type="number"] {
 
   &__header {
     margin-top: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
   }
 
   &__actionable-section {
