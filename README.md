@@ -5,6 +5,7 @@ This is a web app to convert currencies. Data is borrowed from the [Exchange Rat
 ## Notes for further development considerations:
 
 - Drew ui inspiration from Google, DuckDuckGo and TransferWise FX converters. (Google also doesn't deal with large numbers. TransferWise doesn't inform user for errors coming from the server).
+- Mobile first approach in terms of design.
 - There's no visual feedback that user has to scroll horizontally for the added currencies.
 - Proper rounding of decimals is missing.
 - This app doesn't deal with proper displaying of large numbers since Javascript's Number primitive has limitations. This can be solved with custom functionality.
