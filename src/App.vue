@@ -50,6 +50,7 @@
       >
         &#10133; Add Currency
       </div>
+      <Chart v-if="historicalData" :historicalData="historicalData" />
     </section>
 
     <Footer
@@ -68,13 +69,19 @@ import Footer from "./components/Footer.vue";
 import DateInput from "./components/DateInput.vue";
 import CurrencyInput from "./components/CurrencyInput.vue";
 import CurrencySelect from "./components/CurrencySelect.vue";
+import Chart from "./components/Chart.vue";
 
 import { Constants } from "./utils/constants";
 import {
   CurrencyRequest,
-  CurrencyResponse
+  CurrencyResponse,
+  HistoricalRequest,
+  HistoricalResponse
 } from "./api-services/currencies/currency-contracts";
-import { getExchangeRatesForSingleDate } from "./api-services/currencies/currency-service";
+import {
+  getExchangeRatesForSingleDate,
+  getHistoricalRates
+} from "./api-services/currencies/currency-service";
 
 interface CurrencyInterface {
   currency: string;
@@ -89,11 +96,19 @@ interface AppData {
   isLoading: boolean;
   errors: string[];
   message: string | null;
+  historicalData: HistoricalResponse | null;
 }
 
 export default Vue.extend({
   name: "App",
-  components: { Header, Footer, DateInput, CurrencyInput, CurrencySelect },
+  components: {
+    Header,
+    Footer,
+    DateInput,
+    CurrencyInput,
+    CurrencySelect,
+    Chart
+  },
   data() {
     return {
       date: null,
@@ -104,11 +119,13 @@ export default Vue.extend({
       lastChangedCurrency: "EUR",
       isLoading: false,
       errors: [],
-      message: null
+      message: null,
+      historicalData: null
     } as AppData;
   },
   async mounted() {
     await this.updateData(this.currencyData[0]);
+    await this.updateHistoricalData();
   },
   methods: {
     async onDateChange() {
@@ -141,6 +158,7 @@ export default Vue.extend({
       ) as CurrencyInterface;
 
       await this.updateData(lastChangedCurrency);
+      await this.updateHistoricalData();
     },
     deleteCurrency(currency: string) {
       this.currencyData = this.currencyData.filter(
@@ -275,6 +293,24 @@ export default Vue.extend({
     },
     isInvalidInput(value: unknown) {
       return !value || typeof value !== "number";
+    },
+    async updateHistoricalData() {
+      try {
+        const requestBody: HistoricalRequest = {
+          base: this.currencyData[0].currency,
+          targets: this.currencyData
+            .map(item => item.currency)
+            .filter(item => item !== this.currencyData[0].currency),
+          dateEnd: this.date as string,
+          dateStart: "2020-12-31"
+        };
+
+        const response = await getHistoricalRates(requestBody);
+
+        this.historicalData = response;
+      } catch (error) {
+        throw new Error();
+      }
     }
   },
   computed: {
@@ -335,7 +371,7 @@ input[type="number"] {
 
   &__header {
     margin-top: 1rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
   }
 
   &__actionable-section {
