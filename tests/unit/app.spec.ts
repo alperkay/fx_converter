@@ -39,7 +39,7 @@ describe("App.vue", () => {
 
   beforeEach(() => {
     localVue = createLocalVue();
-    ((wrapper as unknown) as Wrapper<App>) = factory();
+    (wrapper as any) = factory();
   });
 
   it("renders", () => {
