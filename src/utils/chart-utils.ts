@@ -20,13 +20,16 @@ export interface ChartData {
 
 export function generateChartData(rawData: HistoricalResponse): ChartData {
   const { rates } = rawData;
+
   const arr: ByDateDataPoint[] = [];
+
   for (const key in rates) {
     arr.push({
       date: new Date(key),
       values: rates[key]
     });
   }
+
   arr.sort((a: ByDateDataPoint, b: ByDateDataPoint) => {
     if (a.date > b.date) {
       return 1;
@@ -36,7 +39,6 @@ export function generateChartData(rawData: HistoricalResponse): ChartData {
     }
     return 0;
   });
-  console.log(arr);
 
   const categories = arr.map(dataPoint => formatDate(dataPoint.date));
 

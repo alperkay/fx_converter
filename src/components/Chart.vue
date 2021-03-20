@@ -10,7 +10,6 @@
 </template>
 
 <script lang="ts">
-import { HistoricalResponse } from "@/api-services/currencies/currency-contracts";
 import Vue from "vue";
 import { ApexOptions } from "apexcharts";
 import { ChartData, generateChartData } from "../utils/chart-utils";
@@ -44,15 +43,7 @@ export default Vue.extend({
           size: 1
         },
         xaxis: {
-          categories: this.chartData.categories,
-          labels: {
-            formatter: (value, timestamp, opts) => {
-              console.log(value);
-              if (value) {
-                return value.substring(2);
-              }
-            }
-          }
+          categories: this.chartData.categories
         },
         yaxis: {
           min: this.chartData.min,
