@@ -7,6 +7,8 @@
         data-cy="date-input"
         v-model="date"
         @input="onDateChange"
+        min="1999-01-04"
+        :max="today"
       />
       <div class="app__currencies-container">
         <div
@@ -44,13 +46,31 @@
         </div>
       </div>
       <div
-        class="app__add-button"
+        class="app__button"
         v-if="unusedCurrencies.length"
         @click="addCurrency"
       >
         &#10133; Add Currency
       </div>
-      <Chart v-if="historicalData" :historicalData="historicalData" />
+      <div v-if="!isLoading" class="app__historical">
+        <div>
+          <div class="app__button" @click="setChartVisible(!isChartVisible)">
+            <span>&#x1f4c8;</span>Show Historical Data
+          </div>
+          <DateInput
+            v-if="isChartVisible"
+            v-model="startDate"
+            @input="updateHistoricalData"
+            class="app__start-date"
+            min="1999-01-04"
+            :max="previousDay"
+          />
+        </div>
+        <Chart
+          v-if="isChartVisible && historicalData"
+          :historicalData="historicalData"
+        />
+      </div>
     </section>
 
     <Footer
@@ -82,6 +102,7 @@ import {
   getExchangeRatesForSingleDate,
   getHistoricalRates
 } from "./api-services/currencies/currency-service";
+import { formatDate } from "./utils/date-utils";
 
 interface CurrencyInterface {
   currency: string;
@@ -91,12 +112,14 @@ interface CurrencyInterface {
 
 interface AppData {
   date: string | null;
+  startDate: string | null;
   currencyData: CurrencyInterface[];
   lastChangedCurrency: string;
   isLoading: boolean;
   errors: string[];
   message: string | null;
   historicalData: HistoricalResponse | null;
+  isChartVisible: boolean;
 }
 
 export default Vue.extend({
@@ -112,6 +135,7 @@ export default Vue.extend({
   data() {
     return {
       date: null,
+      startDate: null,
       currencyData: [
         { currency: "EUR", exchangeRate: 1, value: 1 },
         { currency: "USD", exchangeRate: null, value: null }
@@ -120,12 +144,12 @@ export default Vue.extend({
       isLoading: false,
       errors: [],
       message: null,
-      historicalData: null
+      historicalData: null,
+      isChartVisible: false
     } as AppData;
   },
   async mounted() {
     await this.updateData(this.currencyData[0]);
-    await this.updateHistoricalData();
   },
   methods: {
     async onDateChange() {
@@ -133,6 +157,11 @@ export default Vue.extend({
         item => item.currency === this.lastChangedCurrency
       ) as CurrencyInterface;
       await this.updateData(lastChangedCurrency);
+      if (this.historicalData) {
+        await this.updateHistoricalData();
+      }
+    },
+    async onStartDateChange() {
       await this.updateHistoricalData();
     },
     availableCurrencies(currentSelectedCurrency: string): string[] {
@@ -159,7 +188,9 @@ export default Vue.extend({
       ) as CurrencyInterface;
 
       await this.updateData(lastChangedCurrency);
-      await this.updateHistoricalData();
+      if (this.historicalData) {
+        await this.updateHistoricalData();
+      }
     },
     deleteCurrency(currency: string) {
       this.currencyData = this.currencyData.filter(
@@ -204,8 +235,11 @@ export default Vue.extend({
             item => item.currency === target
           ) as CurrencyInterface;
           matchingItem.exchangeRate = response.rates[target];
-          matchingItem.value =
-            (changedCurrency.value as number) * matchingItem.exchangeRate;
+          matchingItem.value = Number(
+            (
+              (changedCurrency.value as number) * matchingItem.exchangeRate
+            ).toFixed(4)
+          );
         });
 
         changedCurrency.exchangeRate = 1;
@@ -238,10 +272,13 @@ export default Vue.extend({
       } else {
         this.currencyData.forEach(item => {
           if (item.currency !== changedCurrency.currency) {
-            item.value =
-              ((changedCurrency.value as number) *
-                (item.exchangeRate as number)) /
-              (changedCurrency.exchangeRate as number);
+            item.value = Number(
+              (
+                ((changedCurrency.value as number) *
+                  (item.exchangeRate as number)) /
+                (changedCurrency.exchangeRate as number)
+              ).toFixed(4)
+            );
           }
         });
       }
@@ -249,7 +286,9 @@ export default Vue.extend({
     async onSelectedCurrencyChange(changedCurrency: CurrencyInterface) {
       this.lastChangedCurrency = changedCurrency.currency;
       await this.updateData(changedCurrency);
-      await this.updateHistoricalData();
+      if (this.historicalData) {
+        await this.updateHistoricalData();
+      }
     },
     setLoading(payload: boolean) {
       this.isLoading = payload;
@@ -297,23 +336,42 @@ export default Vue.extend({
     isInvalidInput(value: unknown) {
       return !value || typeof value !== "number";
     },
+    setChartVisible(payload: boolean) {
+      this.isChartVisible = payload;
+    },
     async updateHistoricalData() {
+      this.historicalData = null;
+
+      if (!this.date || !this.startDate) {
+        return;
+      }
+      this.setLoading(true);
+
       try {
         const requestBody: HistoricalRequest = {
           base: this.currencyData[0].currency,
           targets: this.currencyData
             .map(item => item.currency)
             .filter(item => item !== this.currencyData[0].currency),
-          dateEnd: this.date as string,
-          dateStart: "2020-12-31"
+          dateEnd: this.date,
+          dateStart: this.startDate
         };
 
         const response = await getHistoricalRates(requestBody);
 
-        this.historicalData = response;
+        if (!response) {
+          throw new Error();
+        }
+
+        this.setHistoricalData(response);
       } catch (error) {
-        throw new Error();
+        this.setServerError();
+      } finally {
+        this.setLoading(false);
       }
+    },
+    setHistoricalData(payload: HistoricalResponse | null) {
+      this.historicalData = payload;
     }
   },
   computed: {
@@ -326,6 +384,14 @@ export default Vue.extend({
     },
     hasServerError(): boolean {
       return this.errors.includes(Constants.ERRORS.SERVER);
+    },
+    today(): string {
+      return formatDate(new Date());
+    },
+    previousDay(): string {
+      const date = new Date(this.date as string);
+      date.setDate(date.getDate() - 1);
+      return formatDate(date);
     }
   }
 });
@@ -340,8 +406,6 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  position: fixed;
-  overflow: hidden;
 }
 
 * {
@@ -385,17 +449,13 @@ input[type="number"] {
     width: 100%;
   }
 
-  &__date-input {
-    width: 150px;
-  }
   &__currencies-container {
     -webkit-overflow-scrolling: touch;
     display: flex;
     flex-wrap: nowrap;
     overflow-x: scroll;
     align-items: center;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
+    margin-top: 1rem;
     max-width: 320px;
     width: 100%;
   }
@@ -407,7 +467,7 @@ input[type="number"] {
     display: flex;
     align-items: center;
     position: relative;
-    padding-bottom: 15px;
+    padding-bottom: 8px;
   }
 
   &__item-inner-container {
@@ -429,14 +489,28 @@ input[type="number"] {
     margin-top: -25px;
   }
 
-  &__add-button {
+  &__button {
+    width: 185px;
+    font-size: 0.7rem;
     cursor: pointer;
     border: 1px solid black;
     border-radius: 4px;
-    padding: 6px 10px;
+    padding: 3px 5px;
     &:hover {
       background-color: rgb(243, 237, 237);
     }
+  }
+
+  &__historical {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__start-date {
+    margin-top: 10px;
   }
 
   &__footer {

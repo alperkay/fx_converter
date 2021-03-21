@@ -22,20 +22,16 @@ interface ApexChartSeries {
 export default Vue.extend({
   name: "CurrencyInput",
   props: ["historicalData"],
-  mounted() {
-    console.log(this.historicalData.rates);
-  },
   computed: {
     chartOptions(): ApexOptions {
       return {
         chart: {
-          height: 250,
+          height: 200,
           type: "line",
           toolbar: {
             show: false
           }
         },
-        colors: ["#77B6EA", "#545454"],
         stroke: {
           curve: "smooth"
         },
