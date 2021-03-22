@@ -20,8 +20,9 @@ This is a web app to convert currencies. Data is borrowed from the [Exchange Rat
 - Invalid data input prevention can be improved for Firefox and Safari.
 - Native HTML date input doesn't have a date picker on Safari. Custom one can be made.
 - For now, usage of Vuex seems unnecessary as there's only one view and limited number of components.
-- Unit and E2E tests are missing.
+- Some unit and E2E tests are missing.
 - Debouncing can be added. 
+- A chart showing the historical rates is added (in the chart branch for now). The functionality works properly, but user experience (especially for mobile) should be investigated further.
 
 ## Project setup
 
