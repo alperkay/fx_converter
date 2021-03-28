@@ -24,7 +24,7 @@
               data-cy="base-select"
               :currencies="availableCurrencies(item.currency)"
               v-model="item.currency"
-              @input="onSelectedCurrencyChange(item)"
+              @input="onSelectedCurrencyChange"
             />
             <div
               @click="deleteCurrency(item.currency)"
@@ -85,7 +85,6 @@ interface CurrencyInterface {
 interface AppData {
   date: string | null;
   currencyData: CurrencyInterface[];
-  lastChangedCurrency: string;
   isLoading: boolean;
   errors: string[];
   message: string | null;
@@ -101,53 +100,16 @@ export default Vue.extend({
         { currency: "EUR", exchangeRate: 1, value: 1 },
         { currency: "USD", exchangeRate: null, value: null }
       ],
-      lastChangedCurrency: "EUR",
       isLoading: false,
       errors: [],
       message: null
     } as AppData;
   },
   async mounted() {
-    await this.updateData(this.currencyData[0]);
+    await this.updateData();
   },
   methods: {
-    async onDateChange() {
-      const lastChangedCurrency = this.currencyData.find(
-        item => item.currency === this.lastChangedCurrency
-      ) as CurrencyInterface;
-      await this.updateData(lastChangedCurrency);
-    },
-    availableCurrencies(currentSelectedCurrency: string): string[] {
-      const otherSelected = this.currencyData
-        .filter(item => item.currency !== currentSelectedCurrency)
-        .map(item => item.currency);
-      return Constants.CURRENCIES.filter(
-        currency => !otherSelected.includes(currency)
-      );
-    },
-    async addCurrency() {
-      if (!this.unusedCurrencies) {
-        return;
-      }
-      const newCurrency = {
-        currency: this.unusedCurrencies[0],
-        exchangeRate: null,
-        value: null
-      };
-      this.currencyData.push(newCurrency);
-
-      const lastChangedCurrency = this.currencyData.find(
-        item => item.currency === this.lastChangedCurrency
-      ) as CurrencyInterface;
-
-      await this.updateData(lastChangedCurrency);
-    },
-    deleteCurrency(currency: string) {
-      this.currencyData = this.currencyData.filter(
-        item => item.currency !== currency
-      );
-    },
-    async updateData(changedCurrency: CurrencyInterface) {
+    async updateData() {
       this.setLoading(true);
       this.setMessage(null);
 
@@ -157,11 +119,11 @@ export default Vue.extend({
 
       try {
         const targets: string[] = this.currencyData
-          .map(item => item.currency)
-          .filter(item => item !== changedCurrency.currency);
+          .slice(1)
+          .map(item => item.currency);
 
         const requestBody: CurrencyRequest = {
-          base: changedCurrency.currency,
+          base: this.currencyData[0].currency,
           targets,
           date: this.date ? this.date : undefined
         };
@@ -186,10 +148,10 @@ export default Vue.extend({
           ) as CurrencyInterface;
           matchingItem.exchangeRate = response.rates[target];
           matchingItem.value =
-            (changedCurrency.value as number) * matchingItem.exchangeRate;
+            (this.currencyData[0].value as number) * matchingItem.exchangeRate;
         });
 
-        changedCurrency.exchangeRate = 1;
+        this.currencyData[0].exchangeRate = 1;
       } catch (error) {
         this.setServerError();
         this.clearRates();
@@ -198,9 +160,28 @@ export default Vue.extend({
         this.setLoading(false);
       }
     },
-    async onValueInput(changedCurrency: CurrencyInterface) {
-      this.lastChangedCurrency = changedCurrency.currency;
+    async onDateChange() {
+      await this.updateData();
+    },
+    async addCurrency() {
+      if (!this.unusedCurrencies) {
+        return;
+      }
+      const newCurrency = {
+        currency: this.unusedCurrencies[0],
+        exchangeRate: null,
+        value: null
+      };
+      this.currencyData.push(newCurrency);
 
+      await this.updateData();
+    },
+    deleteCurrency(currency: string) {
+      this.currencyData = this.currencyData.filter(
+        item => item.currency !== currency
+      );
+    },
+    async onValueInput(changedCurrency: CurrencyInterface) {
       if (this.isInvalidInput(changedCurrency.value)) {
         this.setInvalidInputError();
         this.clearValues(
@@ -214,7 +195,7 @@ export default Vue.extend({
       this.removeInvalidInputError();
 
       if (this.hasServerError) {
-        await this.updateData(changedCurrency);
+        await this.updateData();
       } else {
         this.currencyData.forEach(item => {
           if (item.currency !== changedCurrency.currency) {
@@ -226,9 +207,8 @@ export default Vue.extend({
         });
       }
     },
-    async onSelectedCurrencyChange(changedCurrency: CurrencyInterface) {
-      this.lastChangedCurrency = changedCurrency.currency;
-      await this.updateData(changedCurrency);
+    async onSelectedCurrencyChange() {
+      await this.updateData();
     },
     setLoading(payload: boolean) {
       this.isLoading = payload;
@@ -275,6 +255,14 @@ export default Vue.extend({
     },
     isInvalidInput(value: unknown) {
       return !value || typeof value !== "number";
+    },
+    availableCurrencies(currentSelectedCurrency: string): string[] {
+      const otherSelected = this.currencyData
+        .filter(item => item.currency !== currentSelectedCurrency)
+        .map(item => item.currency);
+      return Constants.CURRENCIES.filter(
+        currency => !otherSelected.includes(currency)
+      );
     }
   },
   computed: {

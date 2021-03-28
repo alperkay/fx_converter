@@ -1,4 +1,4 @@
-import { createLocalVue, shallowMount, Wrapper } from "@vue/test-utils";
+import { createLocalVue, shallowMount } from "@vue/test-utils";
 import App from "@/App.vue";
 import Vue from "vue";
 import { Constants } from "@/utils/constants";
